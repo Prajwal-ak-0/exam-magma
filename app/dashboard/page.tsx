@@ -1,6 +1,6 @@
 "use client"
 
-import { useRouter } from 'next/navigation'
+import { useRouter, useSearchParams } from 'next/navigation'
 import { useEffect, useState } from 'react'
 import { PageContainer } from '@/components/PageContainer'
 import { motion } from 'framer-motion'
@@ -9,6 +9,7 @@ import { Card, CardHeader, CardTitle, CardFooter } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
 import { HiInformationCircle } from 'react-icons/hi'
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog"
 
 interface Problem {
   id: string
@@ -21,127 +22,158 @@ interface Problem {
   }
 }
 
+interface ExamSession {
+  usn: string
+  subject: string
+}
+
 export default function DashboardPage() {
   const router = useRouter()
+  const searchParams = useSearchParams()
   const [problems, setProblems] = useState<Problem[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
+  const [examSession, setExamSession] = useState<ExamSession | null>(null)
+  const [quitDialogOpen, setQuitDialogOpen] = useState(false)
+
+  useEffect(() => {
+    const session = localStorage.getItem('examSession')
+    if (!session) {
+      router.push('/')
+      return
+    }
+    setExamSession(JSON.parse(session))
+  }, [router])
 
   useEffect(() => {
     const fetchProblems = async () => {
       try {
-        const response = await fetch('/api/problems')
-        if (!response.ok) {
-          throw new Error('Failed to fetch problems')
+        const subject = searchParams.get('subject')
+        if (!subject) {
+          router.push('/')
+          return
         }
+
+        const response = await fetch(`/api/problems?subject=${encodeURIComponent(subject)}`)
+        if (!response.ok) throw new Error('Failed to fetch problems')
+        
         const data = await response.json()
         setProblems(data)
-      } catch (err) {
-        setError(err instanceof Error ? err.message : 'Failed to load problems')
+      } catch (error) {
+        console.error('Error fetching problems:', error)
+        setError('Failed to load problems. Please try again.')
       } finally {
         setLoading(false)
       }
     }
 
     fetchProblems()
-  }, [])
+  }, [searchParams, router])
+
+  const handleQuitExam = async () => {
+    if (!examSession) return
+
+    try {
+      // Create failed submissions for all problems
+      await Promise.all(problems.map(problem => 
+        fetch('/api/submissions', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            usn: examSession.usn,
+            status: 'FAILED',
+            code: '',
+            examId: problem.exam.id,
+            questionId: problem.id,
+            subject: problem.exam.subject
+          })
+        })
+      ))
+
+      // Clear exam session and redirect to home
+      localStorage.removeItem('examSession')
+      router.push('/')
+    } catch (error) {
+      console.error('Error quitting exam:', error)
+    }
+  }
+
+  if (loading) {
+    return (
+      <PageContainer>
+        <div className="flex items-center justify-center min-h-screen">
+          <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-gray-900"></div>
+        </div>
+      </PageContainer>
+    )
+  }
 
   return (
     <PageContainer>
-      <div className="min-h-screen p-4 md:p-8">
-        <div className="max-w-[1920px] mx-auto space-y-12">
-          {/* Header and Instructions */}
-          <div className="space-y-8">
-            <h1 className="text-5xl font-bold text-white text-center">Welcome to Lab Assessment</h1>
-            
-            <motion.div 
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+        <div className="flex justify-between items-center mb-8">
+          <h1 className="text-3xl font-bold">Available Problems</h1>
+          <Button 
+            variant="destructive"
+            onClick={() => setQuitDialogOpen(true)}
+          >
+            Quit Exam
+          </Button>
+        </div>
+
+        {error && (
+          <Alert variant="destructive" className="mb-6">
+            <HiInformationCircle className="h-4 w-4" />
+            <AlertTitle>Error</AlertTitle>
+            <AlertDescription>{error}</AlertDescription>
+          </Alert>
+        )}
+
+        <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
+          {problems.map((problem) => (
+            <motion.div
+              key={problem.id}
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
-              className="relative overflow-hidden rounded-xl"
+              transition={{ duration: 0.3 }}
             >
-              <div className="absolute inset-0 bg-gradient-to-r from-teal-500/20 to-transparent opacity-20" />
-              <div className="absolute inset-0 bg-[linear-gradient(45deg,transparent_25%,rgba(20,184,166,0.05)_25%,rgba(20,184,166,0.05)_50%,transparent_50%,transparent_75%,rgba(20,184,166,0.05)_75%)] bg-[length:16px_16px]" />
-              
-              <Alert className="relative bg-black/80 border-2 border-teal-500/30 backdrop-blur-sm">
-                <div className="flex items-start space-x-6">
-                  <div className="flex-shrink-0 w-12 h-12 rounded-full bg-teal-500/10 flex items-center justify-center">
-                    <HiInformationCircle className="w-8 h-8 text-teal-400" />
-                  </div>
-                  
-                  <div className="space-y-6 flex-1">
-                    <AlertTitle className="text-2xl font-semibold text-white">Instructions</AlertTitle>
-                    <AlertDescription className="text-gray-300 leading-relaxed">
-                      <ul className="list-disc pl-4 space-y-2">
-                        <li>Select a problem from the list below to begin your assessment.</li>
-                        <li>Read the problem description carefully before starting.</li>
-                        <li>You can use the built-in code editor to write and test your solution.</li>
-                        <li>Make sure to test your code with different test cases.</li>
-                        <li>Submit your solution only when you are confident it works correctly.</li>
-                      </ul>
-                    </AlertDescription>
-                  </div>
-                </div>
-              </Alert>
-            </motion.div>
-          </div>
-
-          {/* Problems Grid */}
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {loading ? (
-              // Loading skeleton
-              Array.from({ length: 6 }).map((_, i) => (
-                <Card key={i} className="bg-black/50 border-2 border-gray-800/50 animate-pulse">
-                  <div className="p-6 space-y-4">
-                    <div className="h-6 bg-gray-700/50 rounded w-3/4"></div>
-                    <div className="h-4 bg-gray-700/50 rounded w-1/2"></div>
-                  </div>
-                </Card>
-              ))
-            ) : error ? (
-              <div className="col-span-full text-center text-red-400 p-4">
-                {error}
-              </div>
-            ) : (
-              problems.map((problem) => (
-                <motion.div
-                  key={problem.id}
-                  initial={{ opacity: 0, scale: 0.9 }}
-                  animate={{ opacity: 1, scale: 1 }}
-                  whileHover={{ scale: 1.02 }}
-                  transition={{ duration: 0.2 }}
-                >
-                  <Card 
-                    className="bg-black/50 border-2 border-gray-800/50 hover:border-teal-500/50 transition-colors cursor-pointer group"
-                    onClick={() => {
-                      console.log('Problem:', problem);
-                      router.push(`/exam/${problem.exam.id}?questionId=${problem.id}`);
-                    }}
+              <Card className="h-full flex flex-col">
+                <CardHeader>
+                  <CardTitle className="flex items-start justify-between">
+                    <span>{problem.title}</span>
+                    <Badge variant="outline">{problem.exam.language}</Badge>
+                  </CardTitle>
+                </CardHeader>
+                <CardFooter className="mt-auto pt-6">
+                  <Button
+                    className="w-full"
+                    onClick={() => router.push(`/exam/${problem.exam.id}?questionId=${problem.id}`)}
                   >
-                    <CardHeader>
-                      <CardTitle className="flex items-start justify-between">
-                        <span className="text-xl font-semibold text-white group-hover:text-teal-400 transition-colors">
-                          {problem.title}
-                        </span>
-                      </CardTitle>
-                      <Badge variant="outline" className="mt-2 text-teal-400 border-teal-400/20">
-                        {problem.exam.subject}
-                      </Badge>
-                    </CardHeader>
-                    <CardFooter>
-                      <Button 
-                        variant="ghost" 
-                        className="w-full text-teal-400 hover:text-teal-300 hover:bg-teal-400/10"
-                      >
-                        Start Problem
-                      </Button>
-                    </CardFooter>
-                  </Card>
-                </motion.div>
-              ))
-            )}
-          </div>
+                    Start Problem
+                  </Button>
+                </CardFooter>
+              </Card>
+            </motion.div>
+          ))}
         </div>
       </div>
+
+      <AlertDialog open={quitDialogOpen} onOpenChange={setQuitDialogOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Are you sure you want to quit?</AlertDialogTitle>
+            <AlertDialogDescription>
+              This action will mark all problems as failed and end your exam session.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction onClick={handleQuitExam}>
+              Quit Exam
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </PageContainer>
   )
 }

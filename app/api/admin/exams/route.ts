@@ -31,8 +31,35 @@ export async function GET() {
   try {
     const exams = await prisma.exam.findMany({
       include: {
-        questions: true,
-        submissions: true,
+        questions: {
+          select: {
+            id: true,
+            title: true,
+            description: true,
+            examId: true,
+            createdAt: true,
+            updatedAt: true,
+          },
+        },
+        submissions: {
+          select: {
+            id: true,
+            usn: true,
+            status: true,
+            code: true,
+            examId: true,
+            questionId: true,
+            createdAt: true,
+            updatedAt: true,
+            question: {
+              select: {
+                id: true,
+                title: true,
+                description: true
+              }
+            }
+          },
+        },
       },
       orderBy: {
         createdAt: "desc",

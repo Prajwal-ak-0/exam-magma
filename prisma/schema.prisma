@@ -1,4 +1,3 @@
-// This is your Prisma schema file
 generator client {
   provider = "prisma-client-js"
 }
@@ -10,47 +9,45 @@ datasource db {
 }
 
 model Exam {
-  id              String    @id @default(cuid())
-  subject         String
-  semester        Int
-  section         String
-  branch          String
-  language        String
-  inchargeName    String
-  createdAt       DateTime  @default(now())
-  updatedAt       DateTime  @updatedAt
-  questions       Question[]
-  submissions     Submission[]
+  id           String       @id @default(cuid())
+  subject      String
+  semester     Int
+  section      String
+  branch       String
+  language     String
+  inchargeName String
+  createdAt    DateTime     @default(now())
+  updatedAt    DateTime     @updatedAt
+  questions    Question[]
+  submissions  Submission[]
 }
 
 model Question {
-  id          String    @id @default(cuid())
+  id          String       @id @default(cuid())
   title       String
-  description String    @db.Text
+  description String
   examId      String
-  exam        Exam      @relation(fields: [examId], references: [id], onDelete: Cascade)
+  createdAt   DateTime     @default(now())
+  updatedAt   DateTime     @updatedAt
+  exam        Exam         @relation(fields: [examId], references: [id], onDelete: Cascade)
   submissions Submission[]
-  createdAt   DateTime  @default(now())
-  updatedAt   DateTime  @updatedAt
 
   @@index([examId])
 }
 
 model Submission {
-  id          String    @id @default(cuid())
-  usn         String    // College ID
-  status      Status    @default(NOT_SUBMITTED)
-  outcome     Outcome   @default(NOT_EVALUATED)
-  code        String?   @db.Text
-  report      String?   @db.Text
-  examId      String
-  questionId  String
-  exam        Exam      @relation(fields: [examId], references: [id], onDelete: Cascade)
-  question    Question  @relation(fields: [questionId], references: [id], onDelete: Cascade)
-  createdAt   DateTime  @default(now())
-  updatedAt   DateTime  @updatedAt
+  id         String   @id @default(cuid())
+  usn        String
+  status     String
+  code       String
+  examId     String
+  questionId String
+  subject    String
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+  exam       Exam     @relation(fields: [examId], references: [id], onDelete: Cascade)
+  question   Question @relation(fields: [questionId], references: [id], onDelete: Cascade)
 
-  @@unique([usn, examId, questionId])
   @@index([examId])
   @@index([questionId])
 }

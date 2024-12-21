@@ -1,11 +1,14 @@
 "use client"
 
+import { useState } from 'react'
 import { useRouter } from 'next/navigation';
 import { PageContainer } from '../components/PageContainer';
+import { StartExamDialog } from '@/components/exam/StartExamDialog';
 
 export default function Home() {
 
   const router = useRouter();
+  const [startDialogOpen, setStartDialogOpen] = useState(false)
 
   return (
     <PageContainer>
@@ -60,7 +63,7 @@ export default function Home() {
             Take coding lab exams in a secure environment with real-time evaluation.
           </p>
           <button 
-            onClick={() => router.push('/dashboard')}
+            onClick={() => setStartDialogOpen(true)}
             className="px-8 py-4 bg-teal-400 text-black rounded-lg font-semibold text-lg hover:bg-teal-500 transition-all duration-300 transform hover:scale-105 active:scale-95"
           >
             Start Exam
@@ -148,11 +151,16 @@ export default function Home() {
               </div>
             </div>
             <div className="text-center text-gray-300 mt-12 pt-8 border-t border-teal-400/20">
-              © 2024 Ramiah CodeLab. All rights reserved.
+              2024 Ramiah CodeLab. All rights reserved.
             </div>
           </div>
         </footer>
       </div>
+
+      <StartExamDialog
+        open={startDialogOpen}
+        onOpenChange={setStartDialogOpen}
+      />
     </PageContainer>
   );
 }

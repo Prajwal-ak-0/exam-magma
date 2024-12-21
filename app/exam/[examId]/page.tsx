@@ -10,6 +10,7 @@ import { FormattedProblem } from '@/components/exam/FormattedProblem'
 import { useRouter } from 'next/navigation'
 import { TestValidationDialog } from '@/components/exam/TestValidationDialog'
 import { SuccessAnimation } from '@/components/exam/SuccessAnimation'
+import { ThemeToggle } from '@/components/theme-toggle'
 
 interface Question {
   id: string
@@ -110,6 +111,14 @@ export default function ExamPage({ params, searchParams }: {
     fetchQuestion()
   }, [params.examId, searchParams.questionId])
 
+  useEffect(() => {
+    const session = localStorage.getItem('examSession')
+    if (!session) {
+      router.push('/')
+      return
+    }
+  }, [router])
+
   const formatTime = (seconds: number) => {
     const mins = Math.floor(seconds / 60)
     const secs = seconds % 60
@@ -191,11 +200,18 @@ export default function ExamPage({ params, searchParams }: {
   }
 
   const handleSubmitCode = async () => {
-    try {
-      setIsSubmitting(true);
-      handleOpenConsole("Generating test cases...");
+    if (!code.trim() || !formattedQuestion || !question) return
 
-      // 1. Generate test cases
+    setIsSubmitting(true)
+    try {
+      const session = localStorage.getItem('examSession')
+      if (!session) {
+        router.push('/')
+        return
+      }
+      const { usn } = JSON.parse(session)
+
+      // Generate and execute test cases
       console.log("MAKING GENERATE TEST CASES REQUEST")
       const testCasesResponse = await fetch('/api/generate-test', {
         method: 'POST',
@@ -257,18 +273,48 @@ export default function ExamPage({ params, searchParams }: {
 
       console.log("Validation Result: ", validationResult);
       
-      // 4. Show success/failure UI
+      // 4. Show success/failure UI and create submission
       if (validationResult.success) {
-        // Show confetti
-        setShowSuccessAnimation(true);
-        setTimeout(() => setShowSuccessAnimation(false), 3000);
-      } else {
-        // Show failure dialog
-        setTestCase(validationResult.testCase || 'Test case failed');
-        setShowTestDialog(true);
-        setTimeout(() => setShowTestDialog(false), 3000);
-      }
+        // Create successful submission
+        await fetch('/api/submissions', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            usn,
+            status: 'SUCCESS',
+            code,
+            examId: params.examId,
+            questionId: searchParams.questionId,
+            subject: question.exam.subject
+          })
+        })
 
+        // Show success animation
+        setShowSuccessAnimation(true)
+        setTimeout(() => {
+          setShowSuccessAnimation(false)
+          router.push('/dashboard')
+        }, 3000)
+      } else {
+        // Create failed submission
+        await fetch('/api/submissions', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            usn,
+            status: 'FAILED',
+            code,
+            examId: params.examId,
+            questionId: searchParams.questionId,
+            subject: question.exam.subject
+          })
+        })
+
+        // Show failure dialog
+        setTestCase(validationResult.testCase || 'Test case failed')
+        setShowTestDialog(true)
+        setTimeout(() => setShowTestDialog(false), 3000)
+      }
     } catch (error: any) {
       handleOpenConsole('Error: ' + error.message);
     } finally {
@@ -316,24 +362,19 @@ export default function ExamPage({ params, searchParams }: {
       />
       <SuccessAnimation isVisible={showSuccessAnimation} />
       {/* NAVBAR */}
-      <nav className="sticky top-0 z-10 h-14 border-b border-neutral-800 bg-black/50 backdrop-blur-sm">
+      <nav className="sticky top-0 z-10 h-14 border-b border-neutral-800 bg-black/50 backdrop-blur-sm dark:bg-black/50 dark:border-neutral-800 bg-white/50 border-neutral-200">
         <div className="flex items-center justify-between px-4 h-14">
           <div className="flex items-center gap-4">
-            <h1 className="text-xl font-semibold text-white">CodeLab</h1>
-            <span className="text-sm text-neutral-400">{question.title}</span>
+            <h1 className="text-xl font-semibold text-foreground">CodeLab</h1>
+            <span className="text-sm text-muted-foreground">{question?.title}</span>
           </div>
           <div className="flex items-center gap-4">
-            <div className="flex items-center text-sm text-neutral-400">
+            <div className="flex items-center text-sm text-muted-foreground">
               <FiClock className="mr-2" />
               {formatTime(timeLeft)}
             </div>
-            <Button 
-              variant="destructive" 
-              size="sm"
-              onClick={() => router.push('/dashboard')}
-            >
-              End Exam
-            </Button>
+            <ThemeToggle />
+            <Button variant="destructive" size="sm">End Exam</Button>
           </div>
         </div>
       </nav>
