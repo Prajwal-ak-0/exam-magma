@@ -8,6 +8,8 @@ import { CodeEditor } from '@/components/exam/CodeEditor'
 import { Resizer } from '@/components/exam/Resizer'
 import { FormattedProblem } from '@/components/exam/FormattedProblem'
 import { useRouter } from 'next/navigation'
+import { TestValidationDialog } from '@/components/exam/TestValidationDialog'
+import { SuccessAnimation } from '@/components/exam/SuccessAnimation'
 
 interface Question {
   id: string
@@ -50,6 +52,11 @@ export default function ExamPage({ params, searchParams }: {
   const [consoleHeight, setConsoleHeight] = useState(200)
   const [consoleOutput, setConsoleOutput] = useState("")
   const consoleRef = useRef<HTMLDivElement>(null)
+
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [showSuccessAnimation, setShowSuccessAnimation] = useState(false);
+  const [showTestDialog, setShowTestDialog] = useState(false);
+  const [testCase, setTestCase] = useState('');
 
   useEffect(() => {
     const fetchQuestion = async () => {
@@ -183,6 +190,92 @@ export default function ExamPage({ params, searchParams }: {
     }
   }
 
+  const handleSubmitCode = async () => {
+    try {
+      setIsSubmitting(true);
+      handleOpenConsole("Generating test cases...");
+
+      // 1. Generate test cases
+      console.log("MAKING GENERATE TEST CASES REQUEST")
+      const testCasesResponse = await fetch('/api/generate-test', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          problemStatement: formattedQuestion ? JSON.stringify(formattedQuestion) : "",
+          studentCode: code
+        })
+      });
+
+      if (!testCasesResponse.ok) {
+        throw new Error('Failed to generate test cases');
+      }
+
+      const { test_embeded_code } = await testCasesResponse.json();
+      handleOpenConsole("Running generated test cases...\n\nTest Code:\n" + test_embeded_code);
+      
+      console.log("TEST CODE: ", test_embeded_code);
+
+      console.log("MAKING EXECUTE TEST CASES REQUEST")
+      // 2. Execute test cases and get output
+      const executeResponse = await fetch('/api/execute-test', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ test_embeded_code })
+      });
+
+      if (!executeResponse.ok) {
+        throw new Error('Failed to execute test cases');
+      }
+
+      const result = await executeResponse.json();
+      const testOutput = result.output || result.error || 'No output';
+      handleOpenConsole("Test Output:\n" + testOutput);
+
+      console.log("TEST OUTPUT: ", testOutput);
+
+      console.log("MAKING VALIDATE TEST REQUEST")
+      // 3. Validate with LLM
+      const validationResponse = await fetch('/api/validate-test', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          testEmbeddedCode: test_embeded_code,
+          actualProblem: formattedQuestion ? JSON.stringify(formattedQuestion) : "",
+          testOutput: testOutput
+        })
+      });
+
+      if (!validationResponse.ok) {
+        throw new Error('Failed to validate test results');
+      }
+
+      const validationResult = await validationResponse.json();
+
+      console.log("Validation Result: ", validationResult);
+      
+      // 4. Show success/failure UI
+      if (validationResult.success) {
+        // Show confetti
+        setShowSuccessAnimation(true);
+        setTimeout(() => setShowSuccessAnimation(false), 3000);
+      } else {
+        // Show failure dialog
+        setTestCase(validationResult.testCase || 'Test case failed');
+        setShowTestDialog(true);
+        setTimeout(() => setShowTestDialog(false), 3000);
+      }
+
+    } catch (error: any) {
+      handleOpenConsole('Error: ' + error.message);
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
   const handleOpenConsole = (text: string) => {
     setConsoleOutput(text)
     setIsConsoleOpen(true)
@@ -216,6 +309,12 @@ export default function ExamPage({ params, searchParams }: {
 
   return (
     <div className="min-h-screen flex flex-col w-full bg-background">
+      <TestValidationDialog
+        isOpen={showTestDialog}
+        onClose={() => setShowTestDialog(false)}
+        testCase={testCase}
+      />
+      <SuccessAnimation isVisible={showSuccessAnimation} />
       {/* NAVBAR */}
       <nav className="sticky top-0 z-10 h-14 border-b border-neutral-800 bg-black/50 backdrop-blur-sm">
         <div className="flex items-center justify-between px-4 h-14">
@@ -282,7 +381,12 @@ export default function ExamPage({ params, searchParams }: {
               }
             }}
             onRun={handleRunCode}
-            onSubmit={() => handleOpenConsole("Submission successful! All test cases passed.")}
+            onSubmit={handleSubmitCode}
+            isSubmitting={isSubmitting}
+            onTestValidation={async (code) => {
+              const result = await handleRunCode();
+              return result;
+            }}
           />
         </div>
 

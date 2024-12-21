@@ -12,12 +12,14 @@ export async function POST(request: Request) {
       );
     }
 
-    const formattedProblem = await generateProblemStatement(title, description);
-    return NextResponse.json(formattedProblem);
-  } catch (error) {
+    const problem = await generateProblemStatement(title, description);
+    console.log('Formatted problem:', problem);
+    
+    return NextResponse.json(problem);
+  } catch (error: any) {
     console.error('Error formatting problem:', error);
     return NextResponse.json(
-      { error: 'Failed to format problem' },
+      { error: error.message || 'Internal server error' },
       { status: 500 }
     );
   }

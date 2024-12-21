@@ -1,7 +1,10 @@
+import { useState } from 'react'
 import { motion } from 'framer-motion'
 import dynamic from 'next/dynamic'
 import { Button } from '@/components/ui/button'
 import { FiMaximize2, FiMinimize2 } from 'react-icons/fi'
+import { SuccessAnimation } from './SuccessAnimation'
+import { toast } from 'sonner'
 
 const MonacoEditor = dynamic(() => import('@monaco-editor/react'), { ssr: false })
 
@@ -15,6 +18,8 @@ interface CodeEditorProps {
   onToggleMinimize: () => void
   onRun: () => void
   onSubmit: () => void
+  isSubmitting?: boolean
+  onTestValidation?: (code: string) => Promise<any>
 }
 
 const availableLanguages = [
@@ -30,8 +35,12 @@ export function CodeEditor({
   isProblemMinimized,
   onToggleMinimize,
   onRun,
-  onSubmit
+  onSubmit,
+  isSubmitting = false,
+  onTestValidation,
 }: CodeEditorProps) {
+  const [showSuccessAnimation, setShowSuccessAnimation] = useState(false);
+
   return (
     <motion.div
       animate={{ 
@@ -41,6 +50,7 @@ export function CodeEditor({
       transition={{ duration: 0.3, ease: 'easeInOut' }}
       className="flex flex-col overflow-y-hidden min-h-0"
     >
+      <SuccessAnimation isVisible={showSuccessAnimation} />
       {/* Editor Header */}
       <div className="flex-none h-12 flex items-center justify-between border-b border-border/40 px-4 bg-neutral-850">
         <div className="flex items-center gap-4">
@@ -69,8 +79,13 @@ export function CodeEditor({
           <Button variant="secondary" size="sm" onClick={onRun}>
             Run
           </Button>
-          <Button size="sm" onClick={onSubmit}>
-            Submit
+          <Button 
+            variant="secondary" 
+            className="ml-2"
+            onClick={onSubmit}
+            disabled={isSubmitting}
+          >
+            {isSubmitting ? 'Submitting...' : 'Submit'}
           </Button>
         </div>
       </div>
