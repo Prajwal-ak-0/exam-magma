@@ -19,12 +19,14 @@ interface Problem {
     id: string
     subject: string
     language: string
+    semester: number
   }
 }
 
 interface ExamSession {
   usn: string
   subject: string
+  semester: number
 }
 
 export default function DashboardPage() {
@@ -42,38 +44,59 @@ export default function DashboardPage() {
       router.push('/')
       return
     }
-    setExamSession(JSON.parse(session))
+    try {
+      const parsedSession = JSON.parse(session)
+      if (!parsedSession.usn || !parsedSession.subject || !parsedSession.semester) {
+        throw new Error('Invalid session data')
+      }
+      setExamSession(parsedSession)
+    } catch (error) {
+      console.error('Invalid session data:', error)
+      localStorage.removeItem('examSession')
+      router.push('/')
+    }
   }, [router])
 
   useEffect(() => {
     const fetchProblems = async () => {
       try {
         const subject = searchParams.get('subject')
-        if (!subject) {
+        const semester = searchParams.get('semester')
+        
+        if (!subject || !semester) {
           router.push('/')
           return
         }
 
-        const response = await fetch(`/api/problems?subject=${encodeURIComponent(subject)}`)
-        if (!response.ok) throw new Error('Failed to fetch problems')
+        const response = await fetch(
+          `/api/problems?subject=${encodeURIComponent(subject)}&semester=${encodeURIComponent(semester)}`
+        )
+        
+        if (!response.ok) {
+          const errorData = await response.json().catch(() => ({}))
+          throw new Error(errorData.message || 'Failed to fetch problems')
+        }
         
         const data = await response.json()
         setProblems(data)
       } catch (error) {
         console.error('Error fetching problems:', error)
-        setError('Failed to load problems. Please try again.')
+        setError(error instanceof Error ? error.message : 'Failed to load problems. Please try again.')
       } finally {
         setLoading(false)
       }
     }
 
-    fetchProblems()
-  }, [searchParams, router])
+    if (examSession) {
+      fetchProblems()
+    }
+  }, [searchParams, router, examSession])
 
   const handleQuitExam = async () => {
     if (!examSession) return
 
     try {
+      setLoading(true)
       // Create failed submissions for all problems
       await Promise.all(problems.map(problem => 
         fetch('/api/submissions', {
@@ -85,7 +108,8 @@ export default function DashboardPage() {
             code: '',
             examId: problem.exam.id,
             questionId: problem.id,
-            subject: problem.exam.subject
+            subject: problem.exam.subject,
+            semester: examSession.semester
           })
         })
       ))
@@ -95,6 +119,10 @@ export default function DashboardPage() {
       router.push('/')
     } catch (error) {
       console.error('Error quitting exam:', error)
+      setError('Failed to quit exam. Please try again.')
+    } finally {
+      setLoading(false)
+      setQuitDialogOpen(false)
     }
   }
 
@@ -114,7 +142,9 @@ export default function DashboardPage() {
         <div className="flex justify-between items-center mb-8">
           <div>
             <h1 className="text-3xl font-bold text-white">Available Problems</h1>
-            <p className="mt-2 text-neutral-300">Subject: {examSession?.subject}</p>
+            <p className="mt-2 text-neutral-300">
+              Semester: {examSession?.semester} | Subject: {examSession?.subject}
+            </p>
           </div>
           <Button 
             variant="destructive"
@@ -180,8 +210,9 @@ export default function DashboardPage() {
             <AlertDialogAction 
               onClick={handleQuitExam}
               className="bg-red-500 hover:bg-red-600 text-white"
+              disabled={loading}
             >
-              Quit Exam
+              {loading ? "Quitting..." : "Quit Exam"}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

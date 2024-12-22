@@ -1,9 +1,26 @@
-import { NextResponse } from 'next/server';
+import { NextResponse, NextRequest } from 'next/server';
 import { prisma } from '@/lib/prisma';
 
-export async function GET() {
+export async function GET(request: NextRequest) {
   try {
+    const { searchParams } = new URL(request.url);
+    const subject = searchParams.get('subject');
+    const semester = searchParams.get('semester');
+
+    if (!subject || !semester) {
+      return NextResponse.json(
+        { message: 'Subject and semester are required' },
+        { status: 400 }
+      );
+    }
+
     const problems = await prisma.question.findMany({
+      where: {
+        exam: {
+          subject: subject,
+          semester: parseInt(semester)
+        }
+      },
       select: {
         id: true,
         title: true,
@@ -12,12 +29,10 @@ export async function GET() {
           select: {
             id: true,
             subject: true,
-            language: true
+            language: true,
+            semester: true
           }
         }
-      },
-      orderBy: {
-        createdAt: 'desc'
       }
     });
 
@@ -25,7 +40,7 @@ export async function GET() {
   } catch (error: any) {
     console.error('Error fetching problems:', error);
     return NextResponse.json(
-      { error: 'Failed to fetch problems' },
+      { message: 'Failed to fetch problems' },
       { status: 500 }
     );
   }

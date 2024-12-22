@@ -83,13 +83,13 @@ export default function LiveContestsPage() {
       )}
       
       <div className="relative z-10 min-h-screen">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 sm:py-12">
           {/* Header */}
-          <div className="flex items-center justify-between mb-8">
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-8 space-y-4 sm:space-y-0">
             <div>
               <Link 
                 href="/"
-                className={`inline-flex items-center mb-4 ${
+                className={`inline-flex items-center mb-2 sm:mb-4 ${
                   theme === 'light' 
                     ? 'text-teal-600 hover:text-teal-700'
                     : 'text-teal-400 hover:text-teal-300'
@@ -98,12 +98,12 @@ export default function LiveContestsPage() {
                 <FiArrowLeft className="mr-2" />
                 Back to Home
               </Link>
-              <h1 className={`text-3xl font-bold ${
+              <h1 className={`text-2xl sm:text-3xl md:text-4xl font-bold ${
                 theme === 'light' ? 'text-neutral-800' : 'text-white'
               }`}>
                 Live Coding Contests
               </h1>
-              <p className={theme === 'light' ? 'text-neutral-600 mt-2' : 'text-gray-400 mt-2'}>
+              <p className={`text-sm sm:text-base mt-2 ${theme === 'light' ? 'text-neutral-600' : 'text-gray-400'}`}>
                 Stay updated with ongoing and upcoming programming contests
               </p>
             </div>
@@ -124,7 +124,7 @@ export default function LiveContestsPage() {
           {/* Content */}
           {loading ? (
             <div className="flex items-center justify-center h-64">
-              <div className={`animate-spin rounded-full h-12 w-12 border-b-2 ${
+              <div className={`animate-spin rounded-full h-8 sm:h-12 w-8 sm:w-12 border-b-2 ${
                 theme === 'light' ? 'border-teal-600' : 'border-teal-400'
               }`}></div>
             </div>
@@ -137,40 +137,40 @@ export default function LiveContestsPage() {
               {error}
             </div>
           ) : (
-            <div className="grid gap-6">
+            <div className="grid gap-4 sm:gap-6">
               {contests.map((contest) => (
                 <motion.div
                   key={contest.id}
                   initial={{ opacity: 0, y: 20 }}
                   animate={{ opacity: 1, y: 0 }}
-                  className={`rounded-lg p-6 transition-colors ${
+                  className={`rounded-lg p-4 sm:p-6 transition-colors ${
                     theme === 'light'
                       ? 'bg-white border border-neutral-200 hover:border-teal-600/50 shadow-sm'
                       : 'bg-neutral-900 border border-neutral-800 hover:border-teal-400/50'
                   }`}
                 >
-                  <h3 className={`text-xl font-semibold mb-4 ${
+                  <h3 className={`text-lg sm:text-xl font-semibold mb-3 sm:mb-4 ${
                     theme === 'light' ? 'text-neutral-800' : 'text-white'
                   }`}>
                     {contest.name}
                   </h3>
-                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4 text-sm sm:text-base">
                     <div className={`flex items-center ${
                       theme === 'light' ? 'text-neutral-600' : 'text-gray-400'
                     }`}>
-                      <FiClock className="mr-2" />
-                      <span>Starts: {contest.startTime}</span>
+                      <FiClock className="mr-2 flex-shrink-0" />
+                      <span className="truncate">Starts: {contest.startTime}</span>
                     </div>
                     <div className={`flex items-center ${
                       theme === 'light' ? 'text-neutral-600' : 'text-gray-400'
                     }`}>
-                      <FiClock className="mr-2" />
+                      <FiClock className="mr-2 flex-shrink-0" />
                       <span>Duration: {formatDuration(contest.durationSeconds)}</span>
                     </div>
                     <div className={`flex items-center ${
                       theme === 'light' ? 'text-neutral-600' : 'text-gray-400'
                     }`}>
-                      <FiUsers className="mr-2" />
+                      <FiUsers className="mr-2 flex-shrink-0" />
                       <span>{contest.participantsCount.toLocaleString()} participants</span>
                     </div>
                   </div>

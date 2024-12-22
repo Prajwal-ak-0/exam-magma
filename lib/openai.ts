@@ -24,9 +24,11 @@ export async function generateProblemStatement(title: string, description: strin
       messages: [
         {
           role: "user",
-          content: `Generate a coding problem with the following:
+          content: `Generate a  coding problem with the following:
           Title: ${title}
-          Description: ${description}`
+          Description: ${description}
+          <IMPORTANT> 1. DO NOT MODIFY THE PROBLEM STATEMENT \n 2. Keep it short and Simple <IMPORTANT>
+          `
         },
       ],
       response_format: zodResponseFormat(ProblemSchema, "problem"),
@@ -79,6 +81,7 @@ export async function generateTestCases(problemStatement: string, studentCode: s
           7. Maintain original variable names
 
           <IMPORTANT> REPLACE ORIGINAL VALUES WITH A SINGLE SET OF TEST VALUES <IMPORTANT>
+          <IMPORTANT> MAKE SURE THE FINAL CODE HAS A SINGLE SET OF NEW EMBEDDED TEST VALUES </IMPORTANT>
 
           Problem Statement:
           ${problemStatement}

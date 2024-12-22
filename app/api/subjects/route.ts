@@ -3,37 +3,41 @@ import {prisma} from '@/lib/prisma'
 
 export async function GET() {
   try {
+    // Get unique combinations of semester and subject
     const exams = await prisma.exam.findMany({
       select: {
+        semester: true,
         subject: true,
-        semester: true
       },
-      orderBy: [
-        { semester: 'asc' },
-        { subject: 'asc' }
-      ]
+      distinct: ['semester', 'subject'],
+      orderBy: {
+        semester: 'asc',
+      },
     })
 
-    // Group exams by semester
-    const groupedExams = exams.reduce((acc, exam) => {
-      if (!acc[exam.semester]) {
-        acc[exam.semester] = new Set();
+    // Group subjects by semester
+    const semesterData = exams.reduce((acc, exam) => {
+      const existingSemester = acc.find(s => s.semester === exam.semester)
+      
+      if (existingSemester) {
+        if (!existingSemester.subjects.includes(exam.subject)) {
+          existingSemester.subjects.push(exam.subject)
+        }
+      } else {
+        acc.push({
+          semester: exam.semester,
+          subjects: [exam.subject]
+        })
       }
-      acc[exam.semester].add(exam.subject);
-      return acc;
-    }, {} as Record<number, Set<string>>);
+      
+      return acc
+    }, [] as Array<{ semester: number; subjects: string[] }>)
 
-    // Convert to array format
-    const result = Object.entries(groupedExams).map(([semester, subjects]) => ({
-      semester: parseInt(semester),
-      subjects: Array.from(subjects)
-    }));
-
-    return NextResponse.json(result)
+    return NextResponse.json(semesterData)
   } catch (error) {
-    console.error('Failed to fetch subjects:', error)
+    console.error('Error fetching subjects:', error)
     return NextResponse.json(
-      { error: 'Failed to fetch subjects' },
+      { message: 'Failed to fetch subjects' },
       { status: 500 }
     )
   }

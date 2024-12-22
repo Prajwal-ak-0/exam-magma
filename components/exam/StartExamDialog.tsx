@@ -4,7 +4,6 @@ import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import { Button } from "@/components/ui/button"
-import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group"
 import { Label } from "@/components/ui/label"
 import { Input } from "@/components/ui/input"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
@@ -27,15 +26,18 @@ export function StartExamDialog({ open, onOpenChange }: StartExamDialogProps) {
   const [selectedSemester, setSelectedSemester] = useState<string>("")
   const [selectedSubject, setSelectedSubject] = useState("")
   const [loading, setLoading] = useState(false)
+  const [error, setError] = useState<string | null>(null)
 
   useEffect(() => {
     const fetchSubjects = async () => {
       try {
         const response = await fetch('/api/subjects')
+        if (!response.ok) throw new Error('Failed to fetch subjects')
         const data = await response.json()
         setExamData(data)
       } catch (error) {
         console.error('Failed to fetch subjects:', error)
+        setError('Failed to load subjects. Please try again.')
       }
     }
 
@@ -45,13 +47,19 @@ export function StartExamDialog({ open, onOpenChange }: StartExamDialogProps) {
   }, [step])
 
   const handleNext = () => {
-    if (usn.trim()) {
-      setStep(2)
+    if (!usn.trim()) {
+      setError('Please enter your USN')
+      return
     }
+    setError(null)
+    setStep(2)
   }
 
   const handleFinish = async () => {
-    if (!usn || !selectedSubject || !selectedSemester) return
+    if (!usn || !selectedSubject || !selectedSemester) {
+      setError('Please fill in all fields')
+      return
+    }
 
     setLoading(true)
     try {
@@ -60,16 +68,16 @@ export function StartExamDialog({ open, onOpenChange }: StartExamDialogProps) {
         subject: selectedSubject,
         semester: parseInt(selectedSemester)
       }))
-      router.push(`/dashboard?subject=${encodeURIComponent(selectedSubject)}&semester=${selectedSemester}`)
+      router.push(`/dashboard?subject=${encodeURIComponent(selectedSubject)}&semester=${encodeURIComponent(selectedSemester)}`)
       onOpenChange(false)
     } catch (error) {
       console.error('Failed to start exam:', error)
+      setError('Failed to start exam. Please try again.')
     } finally {
       setLoading(false)
     }
   }
 
-  // Get available subjects for selected semester
   const availableSubjects = selectedSemester 
     ? examData.find(d => d.semester === parseInt(selectedSemester))?.subjects || []
     : []
@@ -83,6 +91,10 @@ export function StartExamDialog({ open, onOpenChange }: StartExamDialogProps) {
           </DialogTitle>
         </DialogHeader>
 
+        {error && (
+          <div className="text-red-500 text-sm text-center">{error}</div>
+        )}
+
         {step === 1 ? (
           <div className="space-y-6 py-4">
             <div className="space-y-4">
@@ -93,36 +105,27 @@ export function StartExamDialog({ open, onOpenChange }: StartExamDialogProps) {
                 id="usn"
                 placeholder="e.g., 1MS22IS001"
                 value={usn}
-                onChange={(e) => setUsn(e.target.value)}
+                onChange={(e) => setUsn(e.target.value.toUpperCase())}
                 className="h-12 text-lg border-2 border-teal-200 focus:border-teal-500 focus:ring-teal-500"
               />
-              <p className="text-sm text-gray-500 dark:text-gray-400">
-                Please enter your university seat number (USN) to proceed
-              </p>
             </div>
             <Button 
-              className="w-full h-12 text-lg bg-teal-600 hover:bg-teal-700 text-white transition-colors"
               onClick={handleNext}
-              disabled={!usn.trim()}
+              className="w-full h-12 text-lg bg-teal-600 hover:bg-teal-700 text-white"
+              disabled={loading}
             >
-              Next Step
+              Next
             </Button>
           </div>
         ) : (
           <div className="space-y-6 py-4">
             <div className="space-y-4">
               <div className="space-y-2">
-                <Label className="text-lg font-medium">
+                <Label htmlFor="semester" className="text-lg font-medium">
                   Select Semester
                 </Label>
-                <Select
-                  value={selectedSemester}
-                  onValueChange={(value) => {
-                    setSelectedSemester(value)
-                    setSelectedSubject("") // Reset subject when semester changes
-                  }}
-                >
-                  <SelectTrigger className="h-12 text-lg border-2 border-teal-200 focus:border-teal-500 focus:ring-teal-500">
+                <Select value={selectedSemester} onValueChange={setSelectedSemester}>
+                  <SelectTrigger id="semester" className="h-12 text-lg border-2 border-teal-200">
                     <SelectValue placeholder="Choose semester" />
                   </SelectTrigger>
                   <SelectContent>
@@ -130,60 +133,50 @@ export function StartExamDialog({ open, onOpenChange }: StartExamDialogProps) {
                       <SelectItem 
                         key={data.semester} 
                         value={data.semester.toString()}
-                        className="text-lg"
                       >
-                        {data.semester}th Semester
+                        Semester {data.semester}
                       </SelectItem>
                     ))}
                   </SelectContent>
                 </Select>
               </div>
 
-              {selectedSemester && (
-                <div className="space-y-2">
-                  <Label className="text-lg font-medium">
-                    Select Subject
-                  </Label>
-                  <RadioGroup
-                    value={selectedSubject}
-                    onValueChange={setSelectedSubject}
-                    className="space-y-3"
-                  >
+              <div className="space-y-2">
+                <Label htmlFor="subject" className="text-lg font-medium">
+                  Select Subject
+                </Label>
+                <Select 
+                  value={selectedSubject} 
+                  onValueChange={setSelectedSubject}
+                  disabled={!selectedSemester}
+                >
+                  <SelectTrigger id="subject" className="h-12 text-lg border-2 border-teal-200">
+                    <SelectValue placeholder="Choose subject" />
+                  </SelectTrigger>
+                  <SelectContent>
                     {availableSubjects.map((subject) => (
-                      <div key={subject} className="flex items-center space-x-3 p-3 rounded-lg border-2 border-teal-100 hover:border-teal-300 transition-colors">
-                        <RadioGroupItem 
-                          value={subject} 
-                          id={subject}
-                          className="text-teal-600 border-2 border-teal-300"
-                        />
-                        <Label htmlFor={subject} className="text-lg cursor-pointer">
-                          {subject}
-                        </Label>
-                      </div>
+                      <SelectItem key={subject} value={subject}>
+                        {subject}
+                      </SelectItem>
                     ))}
-                  </RadioGroup>
-                </div>
-              )}
-              <p className="text-sm text-gray-500 dark:text-gray-400">
-                First select your semester, then choose the subject for your exam
-              </p>
+                  </SelectContent>
+                </Select>
+              </div>
             </div>
+
             <div className="flex space-x-4">
               <Button 
                 variant="outline"
-                className="flex-1 h-12 text-lg border-2 border-teal-200 hover:bg-teal-50"
-                onClick={() => {
-                  setStep(1)
-                  setSelectedSemester("")
-                  setSelectedSubject("")
-                }}
+                onClick={() => setStep(1)}
+                className="flex-1 h-12 text-lg"
+                disabled={loading}
               >
                 Back
               </Button>
               <Button 
-                className="flex-1 h-12 text-lg bg-teal-600 hover:bg-teal-700 text-white transition-colors"
                 onClick={handleFinish}
-                disabled={!selectedSubject || !selectedSemester || loading}
+                className="flex-1 h-12 text-lg bg-teal-600 hover:bg-teal-700 text-white"
+                disabled={loading || !selectedSemester || !selectedSubject}
               >
                 {loading ? "Starting..." : "Start Exam"}
               </Button>
