@@ -10,7 +10,6 @@ import { FormattedProblem } from '@/components/exam/FormattedProblem'
 import { useRouter } from 'next/navigation'
 import { TestValidationDialog } from '@/components/exam/TestValidationDialog'
 import { SuccessAnimation } from '@/components/exam/SuccessAnimation'
-import { ThemeToggle } from '@/components/theme-toggle'
 
 interface Question {
   id: string
@@ -333,7 +332,7 @@ export default function ExamPage({ params, searchParams }: {
 
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
+      <div className="min-h-screen flex items-center justify-center bg-black">
         <div className="text-teal-400">Loading exam questions...</div>
       </div>
     )
@@ -341,7 +340,7 @@ export default function ExamPage({ params, searchParams }: {
 
   if (error || !question) {
     return (
-      <div className="min-h-screen flex flex-col items-center justify-center space-y-4">
+      <div className="min-h-screen flex flex-col items-center justify-center space-y-4 bg-black">
         <div className="text-red-400 text-lg">{error || 'Question not found'}</div>
         <Button 
           onClick={() => router.push('/dashboard')}
@@ -354,7 +353,7 @@ export default function ExamPage({ params, searchParams }: {
   }
 
   return (
-    <div className="min-h-screen flex flex-col w-full bg-background">
+    <div className="min-h-screen flex flex-col w-full bg-black">
       <TestValidationDialog
         isOpen={showTestDialog}
         onClose={() => setShowTestDialog(false)}
@@ -362,19 +361,24 @@ export default function ExamPage({ params, searchParams }: {
       />
       <SuccessAnimation isVisible={showSuccessAnimation} />
       {/* NAVBAR */}
-      <nav className="sticky top-0 z-10 h-14 border-b border-neutral-800 bg-black/50 backdrop-blur-sm dark:bg-black/50 dark:border-neutral-800 bg-white/50 border-neutral-200">
+      <nav className="sticky top-0 z-10 h-14 border-b border-neutral-800 bg-black/50 backdrop-blur-sm">
         <div className="flex items-center justify-between px-4 h-14">
           <div className="flex items-center gap-4">
-            <h1 className="text-xl font-semibold text-foreground">CodeLab</h1>
-            <span className="text-sm text-muted-foreground">{question?.title}</span>
+            <h1 className="text-xl font-semibold text-white">CodeLab</h1>
+            <span className="text-sm text-neutral-400">{question?.title}</span>
           </div>
           <div className="flex items-center gap-4">
-            <div className="flex items-center text-sm text-muted-foreground">
+            <div className="flex items-center text-sm text-neutral-400">
               <FiClock className="mr-2" />
               {formatTime(timeLeft)}
             </div>
-            <ThemeToggle />
-            <Button variant="destructive" size="sm">End Exam</Button>
+            <Button 
+              variant="destructive" 
+              size="sm"
+              className="bg-red-500 hover:bg-red-600 text-white"
+            >
+              End Exam
+            </Button>
           </div>
         </div>
       </nav>
@@ -386,18 +390,18 @@ export default function ExamPage({ params, searchParams }: {
           <AnimatePresence>
             {descriptionWidth > 0 && (
               <div
-                className={`bg-black border-r border-gray-800 overflow-y-auto transition-all duration-300 ease-in-out ${
+                className={`bg-black border-r border-neutral-800 overflow-y-auto transition-all duration-300 ease-in-out ${
                   isProblemMinimized ? 'w-0' : `w-[${descriptionWidth}%]`
                 }`}
               >
                 {loading ? (
-                  <div className="p-8">Loading...</div>
+                  <div className="p-8 text-neutral-400">Loading...</div>
                 ) : error ? (
                   <div className="p-8 text-red-400">{error}</div>
                 ) : formattedQuestion ? (
                   <FormattedProblem problem={formattedQuestion} />
                 ) : (
-                  <div className="p-8">No problem description available</div>
+                  <div className="p-8 text-neutral-400">No problem description available</div>
                 )}
               </div>
             )}
@@ -452,7 +456,7 @@ export default function ExamPage({ params, searchParams }: {
               <Button
                 size="icon"
                 variant="ghost"
-                className="absolute top-2 right-2"
+                className="absolute top-2 right-2 text-neutral-400 hover:text-neutral-200 hover:bg-neutral-800/50"
                 onClick={handleCloseConsole}
               >
                 ✕

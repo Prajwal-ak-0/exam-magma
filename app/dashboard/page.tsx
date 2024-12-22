@@ -102,7 +102,7 @@ export default function DashboardPage() {
     return (
       <PageContainer>
         <div className="flex items-center justify-center min-h-screen">
-          <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-gray-900"></div>
+          <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-teal-500"></div>
         </div>
       </PageContainer>
     )
@@ -112,17 +112,21 @@ export default function DashboardPage() {
     <PageContainer>
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
         <div className="flex justify-between items-center mb-8">
-          <h1 className="text-3xl font-bold">Available Problems</h1>
+          <div>
+            <h1 className="text-3xl font-bold text-white">Available Problems</h1>
+            <p className="mt-2 text-neutral-300">Subject: {examSession?.subject}</p>
+          </div>
           <Button 
             variant="destructive"
             onClick={() => setQuitDialogOpen(true)}
+            className="bg-red-500 hover:bg-red-600"
           >
             Quit Exam
           </Button>
         </div>
 
         {error && (
-          <Alert variant="destructive" className="mb-6">
+          <Alert variant="destructive" className="mb-6 bg-red-50 border-red-200 text-red-800">
             <HiInformationCircle className="h-4 w-4" />
             <AlertTitle>Error</AlertTitle>
             <AlertDescription>{error}</AlertDescription>
@@ -137,16 +141,19 @@ export default function DashboardPage() {
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.3 }}
             >
-              <Card className="h-full flex flex-col">
+              <Card className="h-full flex flex-col bg-black border-neutral-200 shadow-lg hover:shadow-xl transition-shadow">
                 <CardHeader>
                   <CardTitle className="flex items-start justify-between">
-                    <span>{problem.title}</span>
-                    <Badge variant="outline">{problem.exam.language}</Badge>
+                    <span className="text-neutral-200">{problem.title}</span>
+                    <Badge variant="outline" className="bg-teal-50 text-teal-700 border-teal-200">
+                      {problem.exam.language}
+                    </Badge>
                   </CardTitle>
+                  <p className="mt-2 text-white text-sm">{problem.description}</p>
                 </CardHeader>
                 <CardFooter className="mt-auto pt-6">
                   <Button
-                    className="w-full"
+                    className="w-full bg-teal-500 hover:bg-teal-600 text-white"
                     onClick={() => router.push(`/exam/${problem.exam.id}?questionId=${problem.id}`)}
                   >
                     Start Problem
@@ -159,16 +166,21 @@ export default function DashboardPage() {
       </div>
 
       <AlertDialog open={quitDialogOpen} onOpenChange={setQuitDialogOpen}>
-        <AlertDialogContent>
+        <AlertDialogContent className="bg-white border-neutral-200">
           <AlertDialogHeader>
-            <AlertDialogTitle>Are you sure you want to quit?</AlertDialogTitle>
-            <AlertDialogDescription>
+            <AlertDialogTitle className="text-neutral-800">Are you sure you want to quit?</AlertDialogTitle>
+            <AlertDialogDescription className="text-neutral-600">
               This action will mark all problems as failed and end your exam session.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel>Cancel</AlertDialogCancel>
-            <AlertDialogAction onClick={handleQuitExam}>
+            <AlertDialogCancel className="bg-neutral-100 hover:bg-neutral-200 text-neutral-700">
+              Cancel
+            </AlertDialogCancel>
+            <AlertDialogAction 
+              onClick={handleQuitExam}
+              className="bg-red-500 hover:bg-red-600 text-white"
+            >
               Quit Exam
             </AlertDialogAction>
           </AlertDialogFooter>
