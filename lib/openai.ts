@@ -66,8 +66,8 @@ export async function generateTestCases(problemStatement: string, studentCode: s
           role: "user",
           content: `You are a test case generator. Your task is to:
           1. Analyze the given student code
-          2. Generate appropriate test cases
-          3. Embed test cases into the student's code WITHOUT modifying their logic
+          2. Generate appropriate test case, But way of generating will slightly different
+          3. So, Embed test case into the student's code WITHOUT modifying their logic
 
           RULES:
           1. DO NOT modify any logic/algorithms in the student's code
@@ -81,7 +81,8 @@ export async function generateTestCases(problemStatement: string, studentCode: s
           7. Maintain original variable names
 
           <IMPORTANT> REPLACE ORIGINAL VALUES WITH A SINGLE SET OF TEST VALUES <IMPORTANT>
-          <IMPORTANT> MAKE SURE THE FINAL CODE HAS A SINGLE SET OF NEW EMBEDDED TEST VALUES </IMPORTANT>
+          <IMPORTANT> MAKE SURE THE FINAL CODE HAS A SINGLE SET OF NEWLY EMBEDDED TEST VALUES </IMPORTANT>
+          <IMPORTANT> MAKE SURE YOU DO NOT RETURN SAME ORINGIAL VALUES <IMPORTANT>
 
           Problem Statement:
           ${problemStatement}

@@ -19,6 +19,7 @@ interface User {
   problemsSolved: number
   status: string
   joinedDate: string
+  ipAddress?: string
 }
 
 export default function UsersPage() {
@@ -64,7 +65,8 @@ export default function UsersPage() {
               <TableHead className="text-neutral-600 dark:text-neutral-400">USN</TableHead>
               <TableHead className="text-neutral-600 dark:text-neutral-400">Status</TableHead>
               <TableHead className="text-neutral-600 dark:text-neutral-400">Problems Solved</TableHead>
-              <TableHead className="text-neutral-600 dark:text-neutral-400">First Submission</TableHead>
+              <TableHead className="text-neutral-600 dark:text-neutral-400">Submission</TableHead>
+              <TableHead className="text-neutral-600 dark:text-neutral-400">LOCAL IP ADDRESS</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
@@ -81,11 +83,12 @@ export default function UsersPage() {
                 </TableCell>
                 <TableCell className="text-neutral-700 dark:text-neutral-300">{user.problemsSolved}</TableCell>
                 <TableCell className="text-neutral-700 dark:text-neutral-300">{user.joinedDate}</TableCell>
+                <TableCell className="text-neutral-700 dark:text-neutral-300">----</TableCell>
               </TableRow>
             ))}
             {users.length === 0 && (
               <TableRow>
-                <TableCell colSpan={4} className="text-center py-6 text-neutral-500 dark:text-neutral-400">
+                <TableCell colSpan={5} className="text-center py-6 text-neutral-500 dark:text-neutral-400">
                   {loading ? 'Loading...' : 'No submissions found'}
                 </TableCell>
               </TableRow>

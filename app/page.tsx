@@ -38,27 +38,25 @@ export default function Home() {
         <header className="flex justify-between items-center px-8 py-6 max-w-7xl mx-auto">
           {/* Logo */}
           <div className="flex items-center space-x-4 hover:scale-105 transition-transform">
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              viewBox="0 0 24 24"
-              fill="currentColor"
-              className="w-8 h-8 text-teal-500"
-            >
-              <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.41 0-8-3.59-8-8s3.59-8 8-8 8 3.59 8 8-3.59 8-8 8z" />
-              <path d="M11 7h2v6h-2zm0 8h2v2h-2z" />
-            </svg>
+            <Image
+              src="/favicon.ico"
+              alt="Logo"
+              width={32}
+              height={32}
+              className="text-teal-500"
+            />
             <h1
               className={`text-2xl font-bold ${
                 theme === "light" ? "text-black" : "text-white"
               }`}
             >
-              Ramiah CodeLab
+              RIT CodeLab
             </h1>
           </div>
 
           {/* Navigation */}
           <nav className="flex space-x-8">
-            {["Features", "About", "Contact"].map((item) => (
+            {["Features", "About"].map((item) => (
               <a
                 key={item}
                 href={`#${item.toLowerCase()}`}
@@ -95,24 +93,6 @@ export default function Home() {
             >
               {theme === "light" ? <FiMoon size={20} /> : <FiSun size={20} />}
             </button>
-            <button
-              className={`px-4 py-2 border rounded transition-all duration-300 transform hover:scale-105 active:scale-95 ${
-                theme === "light"
-                  ? "border-teal-600 text-teal-600 hover:bg-teal-600 hover:text-white"
-                  : "border-teal-400 text-teal-400 hover:bg-teal-400 hover:text-black"
-              }`}
-            >
-              Login
-            </button>
-            <button
-              className={`px-4 py-2 rounded transition-all duration-300 transform hover:scale-105 active:scale-95 ${
-                theme === "light"
-                  ? "bg-teal-600 text-white hover:bg-teal-700"
-                  : "bg-teal-400 text-black hover:bg-teal-500"
-              }`}
-            >
-              Register
-            </button>
           </div>
         </header>
 
@@ -127,7 +107,7 @@ export default function Home() {
             <span
               className={theme === "light" ? "text-teal-600" : "text-teal-400"}
             >
-              CodeLab
+              RIT CodeLab
             </span>
           </h1>
           <p
@@ -215,103 +195,44 @@ export default function Home() {
         <AboutSection theme={theme} />
 
         {/* Footer */}
-        <footer
-          className={`border-t mt-16 ${
-            theme === "light"
-              ? "border-teal-200"
-              : "border-teal-400/20"
-          }`}
-        >
-          <div className="max-w-7xl mx-auto px-6 py-12">
-            <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
-              {[
-                {
-                  title: "Quick Links",
-                  links: ["Documentation", "FAQs", "Support"],
-                },
-                {
-                  title: "Resources",
-                  links: ["Practice Problems", "Learning Path", "Leaderboard"],
-                },
-                {
-                  title: "Legal",
-                  links: ["Privacy Policy", "Terms of Service"],
-                },
-              ].map((section, index) => (
-                <div key={index}>
-                  <h4
-                    className={`font-semibold mb-4 ${
-                      theme === "light" ? "text-teal-600" : "text-teal-400"
-                    }`}
-                  >
-                    {section.title}
-                  </h4>
-                  <ul className="space-y-2">
-                    {section.links.map((link, i) => (
-                      <li key={i}>
-                        <a
-                          href="#"
-                          className={`transition-colors duration-300 inline-block hover:translate-x-1 ${
-                            theme === "light"
-                              ? "text-neutral-600 hover:text-teal-600"
-                              : "text-gray-300 hover:text-teal-400"
-                          }`}
-                        >
-                          {link}
-                        </a>
-                      </li>
-                    ))}
-                  </ul>
-                </div>
-              ))}
-              <div>
-                <h4
-                  className={`font-semibold mb-4 ${
-                    theme === "light" ? "text-teal-600" : "text-teal-400"
-                  }`}
-                >
-                  Contact
-                </h4>
-                <p
-                  className={
-                    theme === "light" ? "text-neutral-600" : "text-gray-300"
-                  }
-                >
-                  MS Ramaiah Institute of Technology
-                </p>
-                <p
-                  className={
-                    theme === "light" ? "text-neutral-600" : "text-gray-300"
-                  }
-                >
-                  Bangalore, Karnataka
-                </p>
-                <p
-                  className={`mt-2 ${
-                    theme === "light" ? "text-neutral-600" : "text-gray-300"
-                  }`}
-                >
-                  support@codelab.msrit.edu
-                </p>
-              </div>
-            </div>
-            <div
-              className={`text-center mt-12 pt-8 border-t ${
-                theme === "light"
-                  ? "text-neutral-600 border-teal-200"
-                  : "text-gray-300 border-teal-400/20"
-              }`}
-            >
-              2024 Ramiah CodeLab. All rights reserved.
-            </div>
+        <footer className="py-6 md:px-8 md:py-0">
+          <div className="container flex flex-col items-center justify-between gap-4 md:h-24 md:flex-row">
+            <p className="text-center text-sm leading-loose text-muted-foreground md:text-left">
+              Built by{" "}
+              <a
+                href="https://msrit.edu"
+                target="_blank"
+                rel="noreferrer"
+                className="font-medium underline underline-offset-4"
+              >
+                MSRIT
+              </a>
+              . The source code is available on{" "}
+              <a
+                href="https://github.com/yourusername/student"
+                target="_blank"
+                rel="noreferrer"
+                className="font-medium underline underline-offset-4"
+              >
+                GitHub
+              </a>
+            </p>
+            <p className="text-center text-sm leading-loose text-muted-foreground md:text-right">
+              <a
+                href="/admin-login"
+                className="font-medium underline underline-offset-4"
+              >
+                Admin Login
+              </a>
+            </p>
           </div>
         </footer>
-      </div>
 
-      <StartExamDialog
-        open={startDialogOpen}
-        onOpenChange={setStartDialogOpen}
-      />
+        <StartExamDialog
+          open={startDialogOpen}
+          onOpenChange={setStartDialogOpen}
+        />
+      </div>
     </PageContainer>
   );
 }

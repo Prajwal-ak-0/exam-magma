@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react"
 import { CreateExamDialog } from "@/components/admin/CreateExamDialog"
 import { EditExamDialog } from "@/components/admin/EditExamDialog"
+import { ManageQuestionsDialog } from "@/components/admin/ManageQuestionsDialog"
 import {
   Table,
   TableBody,
@@ -132,10 +133,11 @@ export default function ProblemsPage() {
                     </Badge>
                   </TableCell>
                   <TableCell>
-                    <div className="flex space-x-2">
+                    <div className="flex gap-2">
+                      <ManageQuestionsDialog examId={exam.id} onQuestionsUpdated={fetchExams} />
                       <Button
                         variant="ghost"
-                        size="icon"
+                        size="sm"
                         onClick={() => handleEdit(exam)}
                         className="text-teal-600 hover:text-teal-700 hover:bg-teal-50 dark:text-teal-400 dark:hover:text-teal-300 dark:hover:bg-teal-400/10"
                       >
@@ -143,7 +145,7 @@ export default function ProblemsPage() {
                       </Button>
                       <Button
                         variant="ghost"
-                        size="icon"
+                        size="sm"
                         onClick={() => handleDelete(exam)}
                         className="text-red-600 hover:text-red-700 hover:bg-red-50 dark:text-red-400 dark:hover:text-red-300 dark:hover:bg-red-400/10"
                       >
