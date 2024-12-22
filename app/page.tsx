@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import { PageContainer } from '../components/PageContainer';
 import { StartExamDialog } from '@/components/exam/StartExamDialog';
 import { FiMoon, FiSun } from 'react-icons/fi';
+import Link from 'next/link';
 
 export default function Home() {
   const router = useRouter();
@@ -60,6 +61,16 @@ export default function Home() {
                 {item}
               </a>
             ))}
+            <Link
+              href="/live-contests"
+              className={`relative ${
+                theme === 'light' 
+                  ? 'text-teal-600 hover:text-teal-700' 
+                  : 'text-teal-400 hover:text-teal-300'
+              } font-medium transition-colors`}
+            >
+              Live Contests
+            </Link>
           </nav>
 
           {/* Auth Buttons and Theme Toggle */}
